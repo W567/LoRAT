@@ -1,22 +1,47 @@
-import shutil
 import os
-from typing import Sequence, Mapping, Optional, Any
+from typing import Sequence, Mapping, Optional, Any, Union
 from types import MappingProxyType
 from ..utils.custom_yaml_loader import load_yaml
+from ...._resources import get_default_consts_path
 
 _global_constants: Optional[Mapping] = None
 _sentinel = object()  # A unique object to detect if a default was not provided.
-__root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
+
+# Env var that points to a user-provided ``consts.yaml`` file. Honoured
+# before the bundled template so users can override defaults without
+# touching the package install.
+_ENV_CONSTS_PATH = 'LORAT_CONSTS_PATH'
 
 
-def _initialize_global_constants():
+def set_global_constants(source: Union[Mapping, str, os.PathLike]) -> None:
+    """Inject the global constants programmatically.
+
+    ``source`` may be either a mapping of constant values, or a filesystem
+    path to a YAML file. Calling this function overrides any prior loading
+    (lazy or explicit) and bypasses ``LORAT_CONSTS_PATH`` for the rest of
+    the process.
+    """
     global _global_constants
-    constants_config_file_path = os.path.join(__root_path, 'consts.yaml')
-    if not os.path.exists(constants_config_file_path):
-        shutil.copy(os.path.join(__root_path, 'consts.yaml.template'), constants_config_file_path)
-        print('consts.yaml not found, copied from template', flush=True)
+    if isinstance(source, Mapping):
+        values = dict(source)
+    else:
+        values = load_yaml(os.fspath(source)) or {}
+    _global_constants = MappingProxyType(values)
 
-    _global_constants = MappingProxyType(load_yaml(constants_config_file_path))
+
+def _initialize_global_constants() -> None:
+    global _global_constants
+    env_path = os.environ.get(_ENV_CONSTS_PATH)
+    if env_path:
+        if not os.path.isfile(env_path):
+            raise FileNotFoundError(
+                f'{_ENV_CONSTS_PATH} is set to {env_path!r} but the file does not exist'
+            )
+        constants_config_file_path = env_path
+    else:
+        constants_config_file_path = get_default_consts_path()
+
+    _global_constants = MappingProxyType(load_yaml(constants_config_file_path) or {})
 
 
 def _get_value(constants: Mapping, paths: Sequence[str], *, default: Any):

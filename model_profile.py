@@ -1,5 +1,5 @@
 import os
-from main import setup_arg_parser
+from trackit.main import setup_arg_parser
 from trackit.core.boot.main import main
 
 

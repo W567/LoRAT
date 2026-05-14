@@ -641,3 +641,7 @@ FodyWeavers.xsd
 /consts.yaml
 my-run.sh
 /.idea
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml

@@ -8,6 +8,7 @@ from .funcs.utils.disable_multithreading import disable_multithreading
 from .funcs.main.load_config import load_config
 from .funcs.main.init_global_context import init_global_context
 from .funcs.main.init_application import prepare_application
+from ..._resources import get_default_config_root
 
 
 def _remove_ddp_parameter(args):
@@ -19,7 +20,13 @@ def _remove_ddp_parameter(args):
 
 
 def main(runtime_vars):
-    runtime_vars.config_path = os.path.join(runtime_vars.root_path, 'config')
+    config_path = getattr(runtime_vars, 'config_path', None)
+    if not config_path:
+        # Honour LORAT_CONFIG_PATH for parity with the live demo, then fall
+        # back to the bundled config tree so the package works after a plain
+        # ``pip install`` without any external ``config/`` directory.
+        config_path = os.environ.get('LORAT_CONFIG_PATH') or get_default_config_root()
+    runtime_vars.config_path = config_path
     if runtime_vars.output_dir is None or len(runtime_vars.output_dir) == 0:
         if not runtime_vars.dry_run:
             print('output_dir is not specified, use --dry_run to run without saving results.')

@@ -4,11 +4,15 @@ from .funcs.sweep import get_sweep_config
 from .funcs.utils.output_stream_redirector import OutputStreamRedirector
 from trackit.core.runtime.utils.custom_yaml_loader import load_yaml
 from trackit.core.runtime.global_constant import get_global_constant
+from trackit._resources import get_default_config_root
 
 
 def _get_program_command(args, unknown_args):
-    train_script = os.path.join(args.root_path, 'main.py')
-    command = ['python', train_script, args.method_name, args.config_name,
+    # Spawn the trainer via ``python -m trackit.main`` so the sweep agent
+    # works after the package is pip-installed and the repo root no longer
+    # contains a top-level ``main.py``.
+    train_script = '-m trackit.main'
+    command = ['python', '-m', 'trackit.main', args.method_name, args.config_name,
                *unknown_args, '--do_sweep', '--kill_other_python_processes']
 
     if args.mixin_config is not None:
@@ -31,7 +35,10 @@ def setup_sweep(args, unknown_args, project_name):
 
 
 def sweep_main(args, unknown_args):
-    args.config_path = os.path.join(args.root_path, 'config')
+    config_path_attr = getattr(args, 'config_path', None)
+    if not config_path_attr:
+        config_path_attr = os.environ.get('LORAT_CONFIG_PATH') or get_default_config_root()
+    args.config_path = config_path_attr
     config_path = os.path.join(args.config_path, args.method_name, args.config_name, 'config.yaml')
     wandb_project_name = load_yaml(config_path, get_global_constant())['logging']['category']
 

@@ -16,7 +16,11 @@ def vot_main(args):
     if args.tracker_name is None:
         args.tracker_name = '-'.join((args.method_name, args.config_name))
 
-    vot_run_command = [sys.executable, os.path.join(args.root_path, 'main.py'), args.method_name, args.config_name,
+    # ``main.py`` used to live at the repo root and was invoked directly.
+    # After moving it inside the package, spawn it via ``-m trackit.main``
+    # so the command works whether LoRAT is run from a checkout or installed
+    # via pip.
+    vot_run_command = [sys.executable, '-m', 'trackit.main', args.method_name, args.config_name,
                        '--device', args.device, '--quiet',
                        '--run_id', args.run_id,
                        '--output_dir', os.path.abspath(os.path.join(args.output_path, 'output'))]

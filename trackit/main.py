@@ -20,6 +20,9 @@ def setup_arg_parser():
                         help='Additional configuration files to mix in (multiple mixin configs is allowed, applied in sequential order),'
                              'searching in order of config/{method_name}/{config_name}/mixin/, config/{method_name}/_mixin, '
                              'config/_mixin.')
+    parser.add_argument('--config_path', type=str, default=None,
+                        help='Override the config root directory. Defaults to the LORAT_CONFIG_PATH env var, '
+                             'or the bundled config tree shipped with the package.')
 
     parser.add_argument('--pin_memory', action='store_true', help='Move tensors to pinned memory before transferring to GPU (improves performance but uses more CPU memory)')
 
@@ -69,8 +72,15 @@ def setup_arg_parser():
     return parser
 
 
-if __name__ == '__main__':
+def cli_main():
     parser = setup_arg_parser()
     args = parser.parse_args()
+    # Kept for backward compatibility with code that still reads
+    # args.root_path; new code paths resolve config_path themselves and
+    # do not need it.
     args.root_path = os.path.dirname(os.path.abspath(__file__))
     main(args)
+
+
+if __name__ == '__main__':
+    cli_main()

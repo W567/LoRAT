@@ -222,7 +222,7 @@ if [[ "$debug" == true ]]; then
     common_options+=("--enable_stack_trace_on_error" "--allow_non_master_node_printing")
 fi
 if [[ "$do_sweep" == false ]]; then
-    PYTHONUNBUFFERED=1 OMP_NUM_THREADS=1 python main.py "${target_options[@]}" "${common_options[@]}"
+    PYTHONUNBUFFERED=1 OMP_NUM_THREADS=1 python -m trackit.main "${target_options[@]}" "${common_options[@]}"
 else
     if [[ -n "$NUM_NODES" && "$NUM_NODES" -gt 1 ]]; then
         echo "Multi-nodes distributed training currently not support for hyper-parameter tunning"
